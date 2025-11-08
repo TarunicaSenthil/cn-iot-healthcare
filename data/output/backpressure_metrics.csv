@@ -1,0 +1,2 @@
+total_tasks,successful_routes,failed_routes,success_rate,failure_rate,avg_hops,total_queue_load
+20,11,9,55.00000000000001,45.0,2.4545454545454546,54

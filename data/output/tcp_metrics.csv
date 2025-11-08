@@ -1,0 +1,2 @@
+total_packets_sent,successful_transmissions,packet_loss_events,delivery_rate,packet_loss_rate,avg_throughput,avg_rtt,max_cwnd,avg_cwnd,final_cwnd,final_ssthresh
+30,0,30,0.0,96.7741935483871,0.0,63.63558825212714,1,1.0,1,2

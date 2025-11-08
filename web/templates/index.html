@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN Healthcare Edge Computing - Real-Time Dashboard</title>
+    
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Vis.js for network visualization -->
+    <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    <link href="https://unpkg.com/vis-network@9.1.2/dist/dist/vis-network.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1><i class="fas fa-network-wired"></i> CN Healthcare Edge Computing Dashboard</h1>
+            <p>Real-Time Backpressure Routing & TCP Congestion Control with ML Prediction</p>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <button id="startBtn" class="btn btn-success">
+                <i class="fas fa-play"></i> Start Simulation
+            </button>
+            <button id="stopBtn" class="btn btn-danger" disabled>
+                <i class="fas fa-stop"></i> Stop Simulation
+            </button>
+            <button id="resetBtn" class="btn btn-warning">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+            <div class="status-indicator">
+                <span id="statusText">Status: Stopped</span>
+                <span id="statusDot" class="status-dot status-stopped"></span>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="dashboard-grid">
+            <!-- Network Topology Visualization -->
+            <div class="card card-large">
+                <div class="card-header">
+                    <h2><i class="fas fa-project-diagram"></i> Network Topology</h2>
+                </div>
+                <div class="card-body">
+                    <div id="networkViz" class="network-canvas"></div>
+                </div>
+            </div>
+
+            <!-- ALGORITHM INSPECTOR PANEL - INDUSTRY LEVEL -->
+            <div class="card card-large">
+                <div class="card-header">
+                    <h2><i class="fas fa-microscope"></i> Algorithm Inspector - Live Execution Trace</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Algorithm Tabs -->
+                    <div class="inspector-tabs">
+                        <button class="inspector-tab active" data-tab="backpressure">
+                            <i class="fas fa-route"></i> Backpressure
+                        </button>
+                        <button class="inspector-tab" data-tab="tcp">
+                            <i class="fas fa-signal"></i> TCP
+                        </button>
+                        <button class="inspector-tab" data-tab="ml">
+                            <i class="fas fa-brain"></i> ML
+                        </button>
+                    </div>
+
+                    <!-- Backpressure Inspector -->
+                    <div id="inspector-backpressure" class="inspector-content active">
+                        <div class="inspector-header">Current Decision Process</div>
+                        <div id="bpDecision" class="decision-box">
+                            Waiting for routing decision...
+                        </div>
+                        
+                        <div class="inspector-header">Algorithm Calculations</div>
+                        <div id="bpFormulas" class="formula-box">
+                            <code>Weight = α × Queue_diff + β × Bandwidth</code>
+                        </div>
+                        
+                        <div class="inspector-metrics">
+                            <div class="metric-inline">
+                                <span class="metric-label">Decisions Made:</span>
+                                <span class="metric-value" id="bpDecisions">0</span>
+                            </div>
+                            <div class="metric-inline">
+                                <span class="metric-label">Avg Decision Time:</span>
+                                <span class="metric-value" id="bpAvgTime">0ms</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TCP Inspector -->
+                    <div id="inspector-tcp" class="inspector-content">
+                        <div class="inspector-header">Current State Machine</div>
+                        <div id="tcpStateMachine" class="state-machine">
+                            <div class="state-node" id="state-slowstart">SLOW_START</div>
+                            <div class="state-arrow">→</div>
+                            <div class="state-node" id="state-congavoid">CONGESTION_AVOIDANCE</div>
+                            <div class="state-arrow">↓</div>
+                            <div class="state-node" id="state-loss">PACKET_LOSS</div>
+                        </div>
+                        
+                        <div class="inspector-header">Live Formula Calculation</div>
+                        <div id="tcpFormulas" class="formula-box">
+                            <code>Waiting for TCP update...</code>
+                        </div>
+                        
+                        <div class="inspector-metrics">
+                            <div class="metric-inline">
+                                <span class="metric-label">State Changes:</span>
+                                <span class="metric-value" id="tcpStateChanges">0</span>
+                            </div>
+                            <div class="metric-inline">
+                                <span class="metric-label">AIMD Cycles:</span>
+                                <span class="metric-value" id="tcpAIMD">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ML Inspector -->
+                    <div id="inspector-ml" class="inspector-content">
+                        <div class="inspector-header">Feature Vector (Current)</div>
+                        <div id="mlFeatures" class="feature-vector">
+                            Waiting for ML prediction...
+                        </div>
+                        
+                        <div class="inspector-header">Decision Boundary</div>
+                        <div id="mlDecision" class="decision-box">
+                            <code>P(congestion | features) = ?</code>
+                        </div>
+                        
+                        <div class="inspector-metrics">
+                            <div class="metric-inline">
+                                <span class="metric-label">Model Type:</span>
+                                <span class="metric-value">Logistic Regression</span>
+                            </div>
+                            <div class="metric-inline">
+                                <span class="metric-label">Inference Time:</span>
+                                <span class="metric-value" id="mlInferenceTime">0ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backpressure Routing Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-route"></i> Backpressure Routing</h3>
+                </div>
+                <div class="card-body">
+                    <div class="metric">
+                        <span class="metric-label">Success Rate:</span>
+                        <span class="metric-value" id="bpSuccessRate">0%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Total Tasks:</span>
+                        <span class="metric-value" id="bpTotalTasks">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Avg Hops:</span>
+                        <span class="metric-value" id="bpAvgHops">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Queue Load:</span>
+                        <span class="metric-value" id="bpQueueLoad">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ML PREDICTION CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-brain"></i> ML Congestion Prediction</h3>
+                </div>
+                <div class="card-body">
+                    <div id="mlAlert" class="ml-alert ml-alert-normal">
+                        <i class="fas fa-shield-alt"></i>
+                        <span id="mlAlertText">Monitoring...</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Prediction Status:</span>
+                        <span class="metric-value" id="mlStatus">Training</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Confidence:</span>
+                        <span class="metric-value" id="mlConfidence">0%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Accuracy:</span>
+                        <span class="metric-value" id="mlAccuracy">0%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Training Samples:</span>
+                        <span class="metric-value" id="mlSamples">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TCP Congestion Control Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-signal"></i> TCP Congestion Control</h3>
+                </div>
+                <div class="card-body">
+                    <div class="metric">
+                        <span class="metric-label">Current CWND:</span>
+                        <span class="metric-value" id="tcpCwnd">1.00</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">SSThresh:</span>
+                        <span class="metric-value" id="tcpSsthresh">16.00</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">State:</span>
+                        <span class="metric-value" id="tcpState">SLOW_START</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Packet Loss:</span>
+                        <span class="metric-value" id="tcpLoss">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TCP CWND Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-line"></i> TCP Congestion Window</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="cwndChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-list"></i> Routing Activity Log</h3>
+                </div>
+                <div class="card-body">
+                    <div id="activityLog" class="activity-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
